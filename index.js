@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 
 const app = express();
@@ -17,13 +17,70 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const serviceCollection = client.db('unicornEmedicine').collection('services');
+        const reviewCollection = client.db('unicornEmedicine').collection('reviews');
 
         app.get('/services', async (req, res) => {
-            const query = {};
-            const cursor = serviceCollection.find(query);
+            const limit = parseInt(req.query.limit);
+
+            if (limit) {
+                const cursor = serviceCollection.find().limit(limit).sort({ "createdAt": -1 });
+                const services = await cursor.toArray();
+                return res.send(services);
+            }
+
+            const cursor = serviceCollection.find().sort({ "createdAt": -1 });
             const services = await cursor.toArray();
             res.send(services);
-        })
+        });
+
+        app.get('/serviceDetails/:id', async (req, res) => {
+            const id = new ObjectId(req.params.id);
+            const query = { _id: id }
+            const serviceDetails = await serviceCollection.findOne(query);
+            console.log(serviceDetails);
+            res.send(serviceDetails);
+        });
+
+        app.post('/service', async (req, res) => {
+            const name = req.body.serviceName;
+            const image = req.body.imageUrl;
+            const rating = req.body.rating;
+            const price = req.body.price;
+            const details = req.body.details;
+            const createdAt = new Date();
+            const updatedAt = new Date();
+
+            const serviceData = { name, image, rating, price, details, createdAt, updatedAt }
+
+            const data = await serviceCollection.insertOne(serviceData);
+            res.send(data);
+        });
+
+        app.post('/review', async (req, res) => {
+            const email = req.body.email;
+            const rating = req.body.rating;
+            const review = req.body.review;
+            const serviceId = ObjectId(req.body.serviceId);
+            const createdAt = new Date();
+            const updatedAt = new Date();
+
+            const reviewData = { email, rating, review, createdAt, updatedAt, serviceId }
+
+            const data = await reviewCollection.insertOne(reviewData);
+            res.send(data);
+        });
+
+        app.get('/review', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const reviewData = await reviewCollection.find(query).toArray();
+
+            for (let i = 0; i < reviewData.length; i++) {
+                const service = await serviceCollection.findOne({ _id: reviewData[i].serviceId });
+                reviewData[i].service = service;
+            }
+            res.send(reviewData);
+        });
     }
     finally {
 
