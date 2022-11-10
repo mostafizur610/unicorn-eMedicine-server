@@ -37,7 +37,7 @@ async function run() {
             const id = new ObjectId(req.params.id);
             const query = { _id: id }
             const serviceDetails = await serviceCollection.findOne(query);
-            console.log(serviceDetails);
+            // console.log(serviceDetails);
             res.send(serviceDetails);
         });
 
@@ -80,12 +80,34 @@ async function run() {
             res.send(reviewData);
         });
 
+        // update
+        // app.patch('/review/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const status = req.body.status;
+        //     const query = { _id: ObjectId(id) }
+        //     const updatedDoc = {
+        //         $set: {
+        //             status: status
+        //         }
+        //     }
+        //     const result = await orderCollection.updateOne(query, updatedDoc);
+        //     res.send(data);
+        // })
+
+        // delete row
         app.delete('/review/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await reviewCollection.deleteOne(query);
             res.send(result);
         })
+        // delete card
+        // app.delete('/services', async (req, res) => {
+        //     const id = req.params.id;
+        //     const query = { _id: ObjectId(id) };
+        //     const result = await reviewCollection.deleteOne(query);
+        //     res.send(result);
+        // })
     }
     finally {
 
