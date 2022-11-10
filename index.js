@@ -63,24 +63,29 @@ async function run() {
             const serviceId = ObjectId(req.body.serviceId);
             const createdAt = new Date();
             const updatedAt = new Date();
-
             const reviewData = { email, rating, review, createdAt, updatedAt, serviceId }
-
             const data = await reviewCollection.insertOne(reviewData);
             res.send(data);
         });
 
         app.get('/review', async (req, res) => {
+            // console.log(req.query);
             const email = req.query.email;
             const query = { email: email }
             const reviewData = await reviewCollection.find(query).toArray();
-
             for (let i = 0; i < reviewData.length; i++) {
                 const service = await serviceCollection.findOne({ _id: reviewData[i].serviceId });
                 reviewData[i].service = service;
             }
             res.send(reviewData);
         });
+
+        app.delete('/review/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await reviewCollection.deleteOne(query);
+            res.send(result);
+        })
     }
     finally {
 
